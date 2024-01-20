@@ -143,8 +143,6 @@ func (jxp *JwtExPath) filter1Star(currentPath string, parse PathParse) bool {
 func (jxp *JwtExPath) filter2StarSuffix(currentPath string, parse PathParse) bool {
 	if parse.TwoStarSuffix.endWith2Star {
 
-		fmt.Println("parse.TwoStarSuffix.endWith2Star:", parse.TwoStarSuffix.pathTrim2Star)
-
 		if jxp.filter1Star(currentPath, parse) {
 			return true
 		}
