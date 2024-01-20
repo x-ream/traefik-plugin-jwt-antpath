@@ -4,5 +4,7 @@ type: middleware
 import: github.com/x-ream/traefik-plugin-jwt-antpath
 compatibility: TODO
 testData:
+  HeaderKey: "Authorization"
+  SecureKey:  "my-secure-key"
   Paths:
     - "/foo/**"
