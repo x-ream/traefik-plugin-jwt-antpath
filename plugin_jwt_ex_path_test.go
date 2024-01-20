@@ -224,6 +224,7 @@ func TestServeHTTP(t *testing.T) {
 
 			SECRET := "abcZSEDDXA+++XDANNHDKEK234223OOPPP133...9US++"
 			cfg.SecureKey = SECRET
+			cfg.HeaderKey = "Authorization"
 
 			user := map[string]interface{}{
 				"UserId":   test.userId,

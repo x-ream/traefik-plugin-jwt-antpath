@@ -30,6 +30,8 @@ and uses the `JWT Ex Path` middleware plugin to block all HTTP requests with a p
 # Block all paths starting with /foo
 [http.middlewares]
   [http.middlewares.ex-foo.plugin.traefik-plugin-jwt-ex-path]
+    secureKey = "my-secret-key"
+    headerKey =  "Authorization"  
     paths = ["/foo/**", "/*/goods/**"]
 
 [http.services]

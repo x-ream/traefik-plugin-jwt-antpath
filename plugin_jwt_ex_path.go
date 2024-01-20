@@ -41,6 +41,7 @@ type JWT struct {
 type Config struct {
 	Paths     []string `json:"paths,omitempty"`
 	SecureKey string   `json:"secureKey,omitempty"`
+	HeaderKey string   `json:"headerKey,omitempty"`
 }
 
 // CreateConfig creates and initializes the plugin configuration.
@@ -53,7 +54,8 @@ type JwtExPath struct {
 	next       http.Handler
 	paths      *[]string
 	pathParses []PathParse
-	key        []byte
+	secureKey  []byte
+	headerKey  string
 }
 
 // New creates and returns a plugin instance.
@@ -97,7 +99,8 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 		next:       next,
 		paths:      &config.Paths,
 		pathParses: pathParses,
-		key:        []byte(config.SecureKey),
+		secureKey:  []byte(config.SecureKey),
+		headerKey:  config.HeaderKey,
 	}, nil
 }
 
@@ -192,15 +195,15 @@ func (jxp *JwtExPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 func (jxp *JwtExPath) verifyJwt(rw http.ResponseWriter, req *http.Request) bool {
 
-	token := req.Header.Get("Authorization")
+	token := req.Header.Get(jxp.headerKey)
 	if token == "" {
-		http.Error(rw, "No Authorization", http.StatusUnauthorized)
+		http.Error(rw, "No "+jxp.headerKey, http.StatusUnauthorized)
 		return false
 	}
 
 	token = strings.TrimPrefix(token, "Bearer ")
 
-	jwt, err, code := ParseJwt(token, jxp.key)
+	jwt, err, code := ParseJwt(token, jxp.secureKey)
 
 	if err != nil {
 		http.Error(rw, err.Error(), code)
