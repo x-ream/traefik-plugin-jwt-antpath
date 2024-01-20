@@ -208,10 +208,6 @@ func (jxp *JwtExPath) verifyJwt(rw http.ResponseWriter, req *http.Request) bool 
 		return false
 	}
 
-	if err != nil {
-		http.Error(rw, err.Error(), http.StatusUnauthorized)
-	}
-
 	delete(jwt.Payload, "exp")
 	delete(jwt.Payload, "iat")
 
