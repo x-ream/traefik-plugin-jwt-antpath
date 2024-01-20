@@ -227,7 +227,7 @@ func (jxp *JwtExPath) verifyJwt(rw http.ResponseWriter, req *http.Request) bool 
 func ParseJwt(token string, key []byte) (*JWT, error, int) {
 	jwtParts := strings.Split(token, ".")
 	if len(jwtParts) != 3 {
-		return nil, fmt.Errorf("非法token"),
+		return nil, fmt.Errorf("illegal token"),
 			http.StatusUnauthorized
 	}
 
