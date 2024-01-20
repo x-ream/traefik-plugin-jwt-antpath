@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type OneStar struct {
@@ -32,7 +33,7 @@ type PathParse struct {
 
 type JWT struct {
 	header    string
-	Payload   string
+	Payload   map[string]interface{}
 	signature string
 }
 
@@ -184,17 +185,17 @@ func (jxp *JwtExPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
 	}
 
-	jxp.verifyJwt(rw, req)
-
-	jxp.next.ServeHTTP(rw, req)
+	if jxp.verifyJwt(rw, req) {
+		jxp.next.ServeHTTP(rw, req)
+	}
 }
 
-func (jxp *JwtExPath) verifyJwt(rw http.ResponseWriter, req *http.Request) {
+func (jxp *JwtExPath) verifyJwt(rw http.ResponseWriter, req *http.Request) bool {
 
 	token := req.Header.Get("Authorization")
 	if token == "" {
 		http.Error(rw, "No Authorization", http.StatusUnauthorized)
-		return
+		return false
 	}
 
 	token = strings.TrimPrefix(token, "Bearer ")
@@ -203,15 +204,21 @@ func (jxp *JwtExPath) verifyJwt(rw http.ResponseWriter, req *http.Request) {
 
 	if err != nil {
 		http.Error(rw, err.Error(), code)
-		return
+		return false
 	}
 
-	jsonMap := make(map[string]interface{})
-	err = json.Unmarshal([]byte(jwt.Payload), &jsonMap)
+	if err != nil {
+		http.Error(rw, err.Error(), http.StatusUnauthorized)
+	}
 
-	for k, v := range jsonMap {
+	delete(jwt.Payload, "exp")
+	delete(jwt.Payload, "iat")
+
+	for k, v := range jwt.Payload {
 		req.Header.Add(k, fmt.Sprintf("%v", v))
 	}
+
+	return true
 }
 
 func ParseJwt(token string, key []byte) (*JWT, error, int) {
@@ -225,21 +232,32 @@ func ParseJwt(token string, key []byte) (*JWT, error, int) {
 	encodedPayload := jwtParts[1]
 	signature := jwtParts[2]
 
-	confirmSignature, err := generateSignature(key, []byte(encodedHeader+"."+encodedPayload))
+	testSignature, err := sign(key, []byte(encodedHeader+"."+encodedPayload))
 	if err != nil {
 		return nil, fmt.Errorf(err.Error()), http.StatusUnauthorized
 	}
 
-	if signature != confirmSignature {
+	if signature != testSignature {
 		return nil, fmt.Errorf("signature wrong"), http.StatusUnauthorized
 	}
 
 	dstPayload, _ := base64.RawURLEncoding.DecodeString(encodedPayload)
 
-	return &JWT{encodedHeader, string(dstPayload), signature}, nil, http.StatusOK
+	payload := make(map[string]interface{})
+	err = json.Unmarshal(dstPayload, &payload)
+
+	if err != nil {
+		return nil, fmt.Errorf(err.Error()), http.StatusUnauthorized
+	}
+
+	if time.Now().Unix() > int64(payload["exp"].(float64)) {
+		return nil, fmt.Errorf("token has expired"), http.StatusUnauthorized
+	}
+
+	return &JWT{encodedHeader, payload, signature}, nil, http.StatusOK
 }
 
-func generateSignature(key []byte, data []byte) (string, error) {
+func sign(key []byte, data []byte) (string, error) {
 	hash := hmac.New(sha256.New, key)
 	_, err := hash.Write(data)
 	if err != nil {

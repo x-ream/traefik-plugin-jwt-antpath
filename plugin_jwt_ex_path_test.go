@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func TestNew(t *testing.T) {
@@ -224,14 +225,12 @@ func TestServeHTTP(t *testing.T) {
 			SECRET := "abcZSEDDXA+++XDANNHDKEK234223OOPPP133...9US++"
 			cfg.SecureKey = SECRET
 
-			user := struct {
-				UserId   int64  `json:"userId"`
-				NickName string `json:"nickName"`
-			}{
-				UserId:   test.userId,
-				NickName: "ooooHig",
+			user := map[string]interface{}{
+				"UserId":   test.userId,
+				"NickName": "ooooHig",
 			}
-			token, _ := CreateToken([]byte(SECRET), user)
+			fmt.Println(time.Now().Unix() + 30*24*60*60)
+			token, _ := CreateToken([]byte(SECRET), user, int(time.Now().Unix())+30*24*60*60)
 
 			handler, err := New(context.Background(), next, cfg, "jwt verification")
 			if err != nil {
@@ -263,9 +262,12 @@ func TestServeHTTP(t *testing.T) {
 
 }
 
-func CreateToken(key []byte, payloadData interface{}) (string, error) {
+func CreateToken(key []byte, m map[string]interface{}, expMinute int) (string, error) {
 	header := `{"alg":"HS256","typ":"JWT"}`
-	payload, jsonErr := json.Marshal(payloadData)
+
+	m["exp"] = expMinute
+	m["iat"] = time.Now().Unix()
+	payload, jsonErr := json.Marshal(m)
 	if jsonErr != nil {
 		return "", jsonErr
 	}
@@ -274,7 +276,7 @@ func CreateToken(key []byte, payloadData interface{}) (string, error) {
 	encodedPayload := encodeBase64(string(payload))
 	HeaderAndPayload := encodedHeader + "." + encodedPayload
 
-	signature, err := generateSignature(key, []byte(HeaderAndPayload))
+	signature, err := sign(key, []byte(HeaderAndPayload))
 	if err != nil {
 		return "", err
 	}
