@@ -1,35 +1,35 @@
-# JWT Ex Path
+# JWT AntPath
 
-[![Build Status](https://github.com/x-ream/traefik-plugin-jwt-ex-pathworkflows/Main/badge.svg?branch=master)](https://github.com/x-ream/traefik-plugin-jwt-ex-pathactions)
+[![Build Status](https://github.com/x-ream/traefik-plugin-jwt-antpath/workflows/Main/badge.svg?branch=master)](https://github.com/x-ream/traefik-plugin-jwt-antpath/actions)
 
-JWT Ex Path is a middleware plugin for [Traefik](https://github.com/x-ream/traefik) which excludes JWT verification of requests from configured path.
+JWT AntPath is a middleware plugin for [Traefik](https://github.com/x-ream/traefik) which excludes JWT verification of requests from configured path.
 
 ## Configuration
 
 ## Static
 
 ```toml
-[experimental.plugins.blockpath]
-    modulename = "github.com/x-ream/traefik-plugin-jwt-ex-path"
+[experimental.plugins.traefik-plugin-jwt-antpath]
+    modulename = "github.com/x-ream/traefik-plugin-jwt-antpath"
     version = "v0.0.1"
 ```
 
 ## Dynamic
 
-To configure the `JWT Ex Path` plugin you should create a [middleware](https://docs.traefik.io/middlewares/overview/) in 
+To configure the `JWT AntPath` plugin you should create a [middleware](https://docs.traefik.io/middlewares/overview/) in 
 your dynamic configuration as explained [here](https://docs.traefik.io/middlewares/overview/). The following example creates
-and uses the `JWT Ex Path` middleware plugin to block all HTTP requests with a path starting with `/foo`. 
+and uses the `JWT AntPath` middleware plugin to verify token and add payload to header of all HTTP requests exclude path starting with `/foo`. 
 
 ```toml
 [http.routers]
   [http.routers.my-router]
     rule = "Host(`localhost`)"
-    middlewares = ["traefik-plugin-jwt-ex-path"]
+    middlewares = ["traefik-plugin-jwt-antpath"]
     service = "my-service"
 
-# Block all paths starting with /foo
+# Very jwt exclude all paths starting with /foo
 [http.middlewares]
-  [http.middlewares.ex-foo.plugin.traefik-plugin-jwt-ex-path]
+  [http.middlewares.foo.plugin.traefik-plugin-jwt-antpath]
     secureKey = "my-secret-key"
     headerKey =  "Authorization"  
     paths = ["/foo/**", "/*/goods/**"]
