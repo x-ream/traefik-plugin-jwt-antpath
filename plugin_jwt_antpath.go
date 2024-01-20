@@ -39,9 +39,9 @@ type JWT struct {
 
 // Config holds the plugin configuration.
 type Config struct {
-	Paths     []string `json:"paths,omitempty"`
-	SecureKey string   `json:"secureKey,omitempty"`
-	HeaderKey string   `json:"headerKey,omitempty"`
+	Paths     []string `json:"paths,omitempty" yaml:"paths,omitempty"`
+	SecureKey string   `json:"secureKey,omitempty" yaml:"secureKey,omitempty"`
+	HeaderKey string   `json:"headerKey,omitempty" yaml:"headerKey,omitempty"`
 }
 
 // CreateConfig creates and initializes the plugin configuration.
