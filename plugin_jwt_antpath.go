@@ -49,10 +49,9 @@ func CreateConfig() *Config {
 	return &Config{}
 }
 
-type JwtExPath struct {
+type JwtAntPath struct {
 	name       string
 	next       http.Handler
-	paths      *[]string
 	pathParses []PathParse
 	secureKey  []byte
 	headerKey  string
@@ -94,17 +93,16 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 
 	}
 
-	return &JwtExPath{
+	return &JwtAntPath{
 		name:       name,
 		next:       next,
-		paths:      &config.Paths,
 		pathParses: pathParses,
 		secureKey:  []byte(config.SecureKey),
 		headerKey:  config.HeaderKey,
 	}, nil
 }
 
-func (jxp *JwtExPath) filter1Star(currentPath string, parse PathParse) bool {
+func (jxp *JwtAntPath) filter1Star(currentPath string, parse PathParse) bool {
 
 	if parse.OneStar.has1Star {
 
@@ -140,7 +138,7 @@ func (jxp *JwtExPath) filter1Star(currentPath string, parse PathParse) bool {
 	return false
 }
 
-func (jxp *JwtExPath) filter2StarSuffix(currentPath string, parse PathParse) bool {
+func (jxp *JwtAntPath) filter2StarSuffix(currentPath string, parse PathParse) bool {
 	if parse.TwoStarSuffix.endWith2Star {
 
 		if jxp.filter1Star(currentPath, parse) {
@@ -155,7 +153,7 @@ func (jxp *JwtExPath) filter2StarSuffix(currentPath string, parse PathParse) boo
 	return false
 }
 
-func (jxp *JwtExPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (jxp *JwtAntPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	currentPath := req.URL.EscapedPath()
 
 	if currentPath == "/" {
@@ -191,7 +189,7 @@ func (jxp *JwtExPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (jxp *JwtExPath) verifyJwt(rw http.ResponseWriter, req *http.Request) bool {
+func (jxp *JwtAntPath) verifyJwt(rw http.ResponseWriter, req *http.Request) bool {
 
 	token := req.Header.Get(jxp.headerKey)
 	if token == "" {
