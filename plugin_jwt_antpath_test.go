@@ -1,5 +1,5 @@
-// Package plugin_jwt_antpath a plugin to verify jwt exclude configured paths.
-package plugin_jwt_antpath
+// Package traefik_plugin_jwt_antpath a plugin to verify jwt exclude configured paths.
+package traefik_plugin_jwt_antpath
 
 import (
 	"context"
