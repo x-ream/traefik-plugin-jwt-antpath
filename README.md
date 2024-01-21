@@ -1,6 +1,6 @@
 # JWT AntPath
 
-![Build Status](https://github.com/x-ream/traefik-plugin-jwt-antpath/workflows/go.yml/badge.svg?branch=main)
+![workflow build](https://github.com/x-ream/traefik-plugin-jwt-antpath/workflows/go.yml/badge.svg)
 
 JWT AntPath is a middleware plugin for [Traefik](https://github.com/x-ream/traefik) which verify JWT excludes configured path, and add payload to header
 
