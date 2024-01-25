@@ -1,7 +1,7 @@
 displayName: JWT AntPath
 summary: JWT Verification exclude the configured path for Traefik 2.x
 type: middleware
-import: github.com/x-ream/jwtantpath
+import: github.com/x-ream/traefik-plugin-jwt-antpath
 compatibility: TODO
 testData:
   headerKey: "Authorization"
