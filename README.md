@@ -9,7 +9,7 @@ JWT AntPath is a middleware plugin for [Traefik](https://github.com/x-ream/traef
 ## Static
 
 ```toml
-[experimental.plugins.traefik-plugin-jwt-antpath]
+[experimental.plugins.jwtant]
     modulename = "github.com/x-ream/traefik-plugin-jwt-antpath"
     version = "v0.0.1"
 ```
@@ -24,12 +24,12 @@ and uses the `JWT AntPath` middleware plugin to verify token and add payload to 
 [http.routers]
   [http.routers.my-router]
     rule = "Host(`localhost`)"
-    middlewares = ["traefik-plugin-jwt-antpath"]
+    middlewares = ["jwtant"]
     service = "my-service"
 
 # Very jwt exclude all paths starting with /foo
 [http.middlewares]
-  [http.middlewares.foo.plugin.traefik-plugin-jwt-antpath]
+  [http.middlewares.foo.plugin.jwtant]
     secureKey = "my-secret-key"
     headerKey =  "Authorization"  
     paths = ["/foo/**", "/*/goods/**"]

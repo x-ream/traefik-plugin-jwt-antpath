@@ -49,7 +49,7 @@ func CreateConfig() *Config {
 	return &Config{}
 }
 
-type JwtAntPath struct {
+type jwtant struct {
 	name       string
 	next       http.Handler
 	pathParses []PathParse
@@ -93,7 +93,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 
 	}
 
-	return &JwtAntPath{
+	return &jwtant{
 		name:       name,
 		next:       next,
 		pathParses: pathParses,
@@ -102,7 +102,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 	}, nil
 }
 
-func (jxp *JwtAntPath) filter1Star(currentPath string, parse PathParse) bool {
+func (ja *jwtant) filter1Star(currentPath string, parse PathParse) bool {
 
 	if parse.OneStar.has1Star {
 
@@ -138,10 +138,10 @@ func (jxp *JwtAntPath) filter1Star(currentPath string, parse PathParse) bool {
 	return false
 }
 
-func (jxp *JwtAntPath) filter2StarSuffix(currentPath string, parse PathParse) bool {
+func (ja *jwtant) filter2StarSuffix(currentPath string, parse PathParse) bool {
 	if parse.TwoStarSuffix.endWith2Star {
 
-		if jxp.filter1Star(currentPath, parse) {
+		if ja.filter1Star(currentPath, parse) {
 			return true
 		}
 
@@ -153,53 +153,53 @@ func (jxp *JwtAntPath) filter2StarSuffix(currentPath string, parse PathParse) bo
 	return false
 }
 
-func (jxp *JwtAntPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (ja *jwtant) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	currentPath := req.URL.EscapedPath()
 
 	if currentPath == "/" {
-		jxp.next.ServeHTTP(rw, req)
+		ja.next.ServeHTTP(rw, req)
 		return
 	}
 
-	for _, parse := range jxp.pathParses {
+	for _, parse := range ja.pathParses {
 
 		if parse.prefix2 != "/*" && !strings.HasPrefix(currentPath, parse.prefix2) {
 			continue
 		}
 
 		if currentPath == parse.path {
-			jxp.next.ServeHTTP(rw, req)
+			ja.next.ServeHTTP(rw, req)
 			return
 		}
 
-		if jxp.filter2StarSuffix(currentPath, parse) {
-			jxp.next.ServeHTTP(rw, req)
+		if ja.filter2StarSuffix(currentPath, parse) {
+			ja.next.ServeHTTP(rw, req)
 			return
 		}
 
-		if jxp.filter1Star(currentPath, parse) {
-			jxp.next.ServeHTTP(rw, req)
+		if ja.filter1Star(currentPath, parse) {
+			ja.next.ServeHTTP(rw, req)
 			return
 		}
 
 	}
 
-	if jxp.verifyJwt(rw, req) {
-		jxp.next.ServeHTTP(rw, req)
+	if ja.verifyJwt(rw, req) {
+		ja.next.ServeHTTP(rw, req)
 	}
 }
 
-func (jxp *JwtAntPath) verifyJwt(rw http.ResponseWriter, req *http.Request) bool {
+func (ja *jwtant) verifyJwt(rw http.ResponseWriter, req *http.Request) bool {
 
-	token := req.Header.Get(jxp.headerKey)
+	token := req.Header.Get(ja.headerKey)
 	if token == "" {
-		http.Error(rw, "No "+jxp.headerKey, http.StatusUnauthorized)
+		http.Error(rw, "No "+ja.headerKey, http.StatusUnauthorized)
 		return false
 	}
 
 	token = strings.TrimPrefix(token, "Bearer ")
 
-	jwt, err, code := ParseJwt(token, jxp.secureKey)
+	jwt, err, code := ParseJwt(token, ja.secureKey)
 
 	if err != nil {
 		http.Error(rw, err.Error(), code)
