@@ -49,7 +49,7 @@ func CreateConfig() *Config {
 	return &Config{}
 }
 
-type jwtant struct {
+type Jwtant struct {
 	name       string
 	next       http.Handler
 	pathParses []PathParse
@@ -93,7 +93,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 
 	}
 
-	return &jwtant{
+	return &Jwtant{
 		name:       name,
 		next:       next,
 		pathParses: pathParses,
@@ -102,7 +102,7 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 	}, nil
 }
 
-func (ja *jwtant) filter1Star(currentPath string, parse PathParse) bool {
+func (ja *Jwtant) filter1Star(currentPath string, parse PathParse) bool {
 
 	if parse.OneStar.has1Star {
 
@@ -138,7 +138,7 @@ func (ja *jwtant) filter1Star(currentPath string, parse PathParse) bool {
 	return false
 }
 
-func (ja *jwtant) filter2StarSuffix(currentPath string, parse PathParse) bool {
+func (ja *Jwtant) filter2StarSuffix(currentPath string, parse PathParse) bool {
 	if parse.TwoStarSuffix.endWith2Star {
 
 		if ja.filter1Star(currentPath, parse) {
@@ -153,7 +153,7 @@ func (ja *jwtant) filter2StarSuffix(currentPath string, parse PathParse) bool {
 	return false
 }
 
-func (ja *jwtant) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+func (ja *Jwtant) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	currentPath := req.URL.EscapedPath()
 
 	if currentPath == "/" {
@@ -189,7 +189,7 @@ func (ja *jwtant) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (ja *jwtant) verifyJwt(rw http.ResponseWriter, req *http.Request) bool {
+func (ja *Jwtant) verifyJwt(rw http.ResponseWriter, req *http.Request) bool {
 
 	token := req.Header.Get(ja.headerKey)
 	if token == "" {
