@@ -1,6 +1,6 @@
 # JWT AntPath
 
-![workflow build](https://github.com/x-ream/traefik-plugin-jwt-antpath/workflows/go.yml/badge.svg)
+![workflow build](https://github.com/x-ream/jwtantpath/workflows/go.yml/badge.svg)
 
 JWT AntPath is a middleware plugin for [Traefik](https://github.com/traefik/traefik) which verify JWT excludes configured path, and add payload to header
 
@@ -10,8 +10,8 @@ JWT AntPath is a middleware plugin for [Traefik](https://github.com/traefik/trae
 
 ```toml
 [experimental.plugins.jwtant]
-    modulename = "github.com/x-ream/traefik-plugin-jwt-antpath"
-    version = "v0.0.2"
+    modulename = "github.com/x-ream/jwtantpath"
+    version = "v0.0.3"
 ```
 
 ## Dynamic
@@ -24,12 +24,12 @@ and uses the `JWT AntPath` middleware plugin to verify token and add payload to 
 [http.routers]
   [http.routers.my-router]
     rule = "Host(`localhost`)"
-    middlewares = ["jwtant"]
+    middlewares = ["jwtantpath"]
     service = "my-service"
 
 # Very jwt exclude all paths starting with /foo
 [http.middlewares]
-  [http.middlewares.foo.plugin.jwtant]
+  [http.middlewares.foo.plugin.jwtantpath]
     secureKey = "my-secret-key"
     headerKey =  "Authorization"  
     paths = ["/foo/**", "/*/goods/**"]
