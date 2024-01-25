@@ -1,3 +1,3 @@
-module github.com/x-ream/traefik_plugin_jwt_antpath
+module github.com/x-ream/traefik-plugin-jwt-antpath
 
 go 1.18
