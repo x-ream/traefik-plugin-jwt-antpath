@@ -6,6 +6,33 @@ JWT AntPath is a middleware plugin for [Traefik](https://github.com/traefik/trae
 
 ## Configuration
 
+## Helm charts values.yml
+
+```yaml
+experimental:
+  enabled: true
+  plugins:
+    jwtantpath:
+      moduleName: "github.com/x-ream/traefik-plugin-jwt-antpath"
+      version: "v0.0.3"
+```
+
+## K8s Middleware
+
+```yaml
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: my-jwtantpath
+spec:
+  plugin:
+    jwtantpath:
+      headerKey: "Authorization"
+      paths:
+        - /base/app-home/**
+      secureKey: "my-secret-key"
+```
+
 ## Static
 
 ```toml
