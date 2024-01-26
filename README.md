@@ -17,7 +17,7 @@ experimental:
       version: "v0.0.3"
 ```
 
-### K8s Middleware
+### K8s middleware
 
 ```yaml
 apiVersion: traefik.containo.us/v1alpha1
@@ -44,6 +44,9 @@ ingress:
   ingressClassName: traefik
   hosts:
     - host: myapp.com
+      paths:
+        - path: /base
+          pathType: "Prefix"
 ```
 
 
