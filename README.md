@@ -28,9 +28,9 @@ spec:
   plugin:
     jwtantpath:
       headerKey: "Authorization"
+      secureKey: "my-secret-key"
       paths:
         - /base/app-home/**
-      secureKey: "my-secret-key"
 ```
 
 ## Static
