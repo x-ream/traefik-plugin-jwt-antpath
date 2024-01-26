@@ -6,7 +6,7 @@ JWT AntPath is a middleware plugin for [Traefik](https://github.com/traefik/trae
 
 ## Configuration
 
-## Helm charts values.yml
+### Helm charts values.yml
 
 ```yaml
 experimental:
@@ -17,7 +17,7 @@ experimental:
       version: "v0.0.3"
 ```
 
-## K8s Middleware
+### K8s Middleware
 
 ```yaml
 apiVersion: traefik.containo.us/v1alpha1
@@ -33,7 +33,23 @@ spec:
         - /base/app-home/**
 ```
 
-## Static
+### App ingress values.yml
+
+```yaml
+ingress:
+  enabled: true
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: test-my-jwtantpath@kubernetescrd,test-strip-prefix@kubernetescrd
+  ingressClassName: traefik
+  hosts:
+    - host: myapp.com
+```
+
+
+## Other configuration
+
+### Static
 
 ```toml
 [experimental.plugins.jwtantpath]
@@ -41,7 +57,7 @@ spec:
     version = "v0.0.3"
 ```
 
-## Dynamic
+### Dynamic
 
 To configure the `JWT AntPath` plugin you should create a [middleware](https://docs.traefik.io/middlewares/overview/) in 
 your dynamic configuration as explained [here](https://docs.traefik.io/middlewares/overview/). The following example creates
