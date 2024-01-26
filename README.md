@@ -4,6 +4,36 @@
 
 JWT AntPath is a middleware plugin for [Traefik](https://github.com/traefik/traefik) which verify JWT excludes configured path, and add payload to header
 
+
+## Limited support AntPath for interpreter plugin
+
+- AntPath only support `/` as separator
+- AntPath only support `*` as wildcard
+- AntPath only support `**` as recursive wildcard
+
+### Support
+
+```yaml
+          paths:
+            - /base/app-home/**
+            - /*/doc/**
+            - /foo/*/doc/**
+            - /foo/* 
+```
+
+### Not support: contains(path, "**") && !endWith2Star
+
+```yaml
+          paths:
+            - /**/app-home/**
+            - /**/app-home/*
+            - /**/doc/**
+            - /**/doc/*
+            - /foo/**/doc/**
+```
+
+
+
 ## Configuration
 
 ### Helm charts values.yml
