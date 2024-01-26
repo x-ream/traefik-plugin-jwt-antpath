@@ -50,7 +50,7 @@ ingress:
 ```
 
 
-## Other configuration
+## Other configuration, not for k8s
 
 ### Static
 
