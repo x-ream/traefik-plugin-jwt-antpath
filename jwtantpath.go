@@ -272,14 +272,12 @@ func schedule(config *Config) {
 
 func refreshJwks(httpClient *http.Client, config *Config, clientPrivateKey *rsa.PrivateKey) {
 
-	req, err := http.NewRequest("GET", config.Jwks.Uri, nil)
+	signBytes, err := signHeader(config.Jwks.ClientId, clientPrivateKey)
 	if err != nil {
 		return
 	}
 
-	validTime := time.Now().Unix() + 60*1000
-	var signStr = config.Jwks.ClientId + ":" + strconv.FormatInt(validTime, 13)
-	signBytes, err := encryptByPrivateKey([]byte(signStr), clientPrivateKey)
+	req, err := http.NewRequest("GET", config.Jwks.Uri, nil)
 	if err != nil {
 		return
 	}
@@ -358,6 +356,12 @@ func sign(key []byte, data []byte) (string, error) {
 
 func encodeBase64(data string) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(data))
+}
+
+func signHeader(clientId string, clientPrivateKey *rsa.PrivateKey) ([]byte, error) {
+	validTime := time.Now().Unix() + 60*1000
+	var signStr = clientId + ":" + strconv.FormatInt(validTime, 13)
+	return encryptByPrivateKey([]byte(signStr), clientPrivateKey)
 }
 
 // copy from https://github.com/farmerx/gorsa
