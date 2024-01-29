@@ -6,5 +6,15 @@ compatibility: TODO
 testData:
   headerKey: "Authorization"
   secureKey:  "my-secure-key"
+  jwks:
+    enabled: false
+    interval: "1m"
+    uri: "http://jwks/one"
+    clientId: "1"
+    clientKey:
+      - |
+        -----BEGIN PRIVATE KEY-----
+        my-private-key
+        -----END PRIVATE KEY-----
   paths:
     - "/foo/**"
