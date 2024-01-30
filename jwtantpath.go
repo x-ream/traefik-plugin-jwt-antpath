@@ -378,7 +378,7 @@ func encryptByPrivateKey(input []byte, privateKey *rsa.PrivateKey) ([]byte, erro
 	if err != nil {
 		return []byte(""), err
 	}
-	return output.AvailableBuffer(), nil
+	return output.Bytes(), nil
 	//return ioutil.ReadAll(output)
 }
 
