@@ -386,8 +386,6 @@ W44Q5FwGTMk+6YohCFP7ZWaLVnI+3zHzLddF2M1+PnUcAQ==
 		return
 	}
 
-	//buf, err = decryptByPublicKey(buf2, publicKey)
-
 	err = rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, hh[:], signed)
 	if err != nil {
 		t.Errorf("handled error: %s", err.Error())
