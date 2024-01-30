@@ -363,8 +363,8 @@ func encodeBase64(data string) string {
 }
 
 func signHeader(clientId string, clientPrivateKey *rsa.PrivateKey) ([]byte, error) {
-	validTime := time.Now().Unix() + 60*1000
-	var signStr = clientId + ":" + strconv.FormatInt(validTime, 13)
+	exp := time.Now().Unix() + 15000
+	var signStr = "clientId=" + clientId + "&&exp" + strconv.FormatInt(exp, 13)
 	return encryptByPrivateKey([]byte(signStr), clientPrivateKey)
 }
 
