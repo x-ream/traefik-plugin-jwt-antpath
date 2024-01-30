@@ -2,18 +2,16 @@
 package traefik_plugin_jwt_antpath
 
 import (
-	"bytes"
 	"context"
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
-	"errors"
 	"fmt"
-	"io"
 	"log"
-	"math/big"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -357,10 +355,13 @@ W44Q5FwGTMk+6YohCFP7ZWaLVnI+3zHzLddF2M1+PnUcAQ==
 
 	testStr := "hello world, start test encrypt and decrypt"
 	startTime := time.Now().UnixMicro()
-	buf, err := encryptByPrivateKey([]byte(testStr), privateKey)
-	endTime := time.Now().UnixMicro()
-	fmt.Println("encrypt time:", endTime-startTime)
 
+	plaload := []byte(testStr)
+	hh := sha256.Sum256(plaload)
+	signed, err := rsa.SignPKCS1v15(rand.Reader, privateKey, crypto.SHA256, hh[:])
+	fmt.Println(string(signed))
+	endTime := time.Now().UnixMicro()
+	fmt.Println("sign time:", endTime-startTime)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -385,105 +386,15 @@ W44Q5FwGTMk+6YohCFP7ZWaLVnI+3zHzLddF2M1+PnUcAQ==
 		return
 	}
 
-	buf, err = decryptByPublicKey(buf, publicKey)
+	//buf, err = decryptByPublicKey(buf2, publicKey)
+
+	err = rsa.VerifyPKCS1v15(publicKey, crypto.SHA256, hh[:], signed)
+	if err != nil {
+		t.Errorf("handled error: %s", err.Error())
+	}
+	fmt.Println("Signature verified successfully!")
+
 	endTime = time.Now().UnixMicro()
-	fmt.Println("decrypt time:", endTime-startTime)
+	fmt.Println("verify time:", endTime-startTime)
 
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	if testStr != string(buf) {
-		t.Errorf("test failed")
-	}
-}
-
-func decryptByPublicKey(input []byte, publicKey *rsa.PublicKey) ([]byte, error) {
-
-	output := bytes.NewBuffer(nil)
-	err := pubKeyIO(publicKey, bytes.NewReader(input), output, false)
-	if err != nil {
-		return []byte(""), err
-	}
-	return io.ReadAll(output)
-}
-
-// copy from https://github.com/farmerx/gorsa
-func pubKeyIO(pub *rsa.PublicKey, in io.Reader, out io.Writer, isEncrytp bool) (err error) {
-	k := (pub.N.BitLen() + 7) / 8
-	if isEncrytp {
-		k = k - 11
-	}
-	buf := make([]byte, k)
-	var b []byte
-	size := 0
-	for {
-		size, err = in.Read(buf)
-		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			return err
-		}
-		if size < k {
-			b = buf[:size]
-		} else {
-			b = buf
-		}
-		if isEncrytp {
-			b, err = rsa.EncryptPKCS1v15(rand.Reader, pub, b)
-		} else {
-			b, err = pubKeyDecrypt(pub, b)
-		}
-		if err != nil {
-			return err
-		}
-		if _, err = out.Write(b); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// copy from https://github.com/farmerx/gorsa
-func pubKeyDecrypt(pub *rsa.PublicKey, data []byte) ([]byte, error) {
-	k := (pub.N.BitLen() + 7) / 8
-	if k != len(data) {
-		return nil, errors.New("data length error")
-	}
-	m := new(big.Int).SetBytes(data)
-	if m.Cmp(pub.N) > 0 {
-		return nil, errors.New("message too long for RSA public key size")
-	}
-	m.Exp(m, big.NewInt(int64(pub.E)), pub.N)
-	d := leftPad(m.Bytes(), k)
-	if d[0] != 0 {
-		return nil, errors.New("data broken, first byte is not zero")
-	}
-	if d[1] != 0 && d[1] != 1 {
-		return nil, errors.New("data is not encrypted by the private key")
-	}
-	var i = 2
-	for ; i < len(d); i++ {
-		if d[i] == 0 {
-			break
-		}
-	}
-	i++
-	if i == len(d) {
-		return nil, nil
-	}
-	return d[i:], nil
-}
-
-// copy from https://github.com/farmerx/gorsa
-func leftPad(input []byte, size int) (out []byte) {
-	n := len(input)
-	if n > size {
-		n = size
-	}
-	out = make([]byte, size)
-	copy(out[len(out)-n:], input)
-	return
 }

@@ -2,8 +2,8 @@
 package traefik_plugin_jwt_antpath
 
 import (
-	"bytes"
 	"context"
+	"crypto"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/rsa"
@@ -15,7 +15,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
@@ -276,7 +275,9 @@ func schedule(config *Config) {
 
 func refreshJwks(httpClient *http.Client, config *Config, clientPrivateKey *rsa.PrivateKey) {
 
-	signBytes, err := signHeader(config.Jwks.ClientId, clientPrivateKey)
+	exp := time.Now().UnixMilli() + 15000
+
+	signBytes, err := signHeader(config.Jwks.ClientId, exp, clientPrivateKey)
 	if err != nil {
 		return
 	}
@@ -289,6 +290,7 @@ func refreshJwks(httpClient *http.Client, config *Config, clientPrivateKey *rsa.
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Cache-Control", "no-cache")
 	req.Header.Add("Client-Id", config.Jwks.ClientId)
+	req.Header.Add("Exp", strconv.FormatInt(exp, 13))
 	req.Header.Add("Sign", base64.StdEncoding.EncodeToString(signBytes))
 
 	rep, err := httpClient.Do(req)
@@ -308,7 +310,12 @@ func refreshJwks(httpClient *http.Client, config *Config, clientPrivateKey *rsa.
 	}
 
 	if key.kid == "oct" && key.alg == "HS256" {
-		config.key.k = key.k
+
+		buffer, err := rsa.DecryptPKCS1v15(rand.Reader, clientPrivateKey, []byte(key.k))
+		if err != nil {
+			return
+		}
+		config.key.k = string(buffer)
 	}
 
 }
@@ -362,26 +369,13 @@ func encodeBase64(data string) string {
 	return base64.RawURLEncoding.EncodeToString([]byte(data))
 }
 
-func signHeader(clientId string, clientPrivateKey *rsa.PrivateKey) ([]byte, error) {
-	exp := time.Now().UnixMilli() + 15000
+func signHeader(clientId string, exp int64, clientPrivateKey *rsa.PrivateKey) ([]byte, error) {
 	var signStr = "clientId=" + clientId + "&&exp" + strconv.FormatInt(exp, 13)
-	return encryptByPrivateKey([]byte(signStr), clientPrivateKey)
+	plaload := []byte(signStr)
+	hh := sha256.Sum256(plaload)
+	return rsa.SignPKCS1v15(rand.Reader, clientPrivateKey, crypto.SHA256, hh[:])
 }
 
-// copy from https://github.com/farmerx/gorsa
-func encryptByPrivateKey(input []byte, privateKey *rsa.PrivateKey) ([]byte, error) {
-	if privateKey == nil {
-		return []byte(""), errors.New(`Please set the private key in advance`)
-	}
-	output := bytes.NewBuffer(nil)
-	err := priKeyIO(privateKey, bytes.NewReader(input), output, true)
-	if err != nil {
-		return []byte(""), err
-	}
-	return io.ReadAll(output)
-}
-
-// copy from https://github.com/farmerx/gorsa
 func getPriKey(privateKeyBuffer []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(privateKeyBuffer)
 	if block == nil {
@@ -396,156 +390,4 @@ func getPriKey(privateKeyBuffer []byte) (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 	return pri2.(*rsa.PrivateKey), nil
-}
-
-// copy from https://github.com/farmerx/gorsa
-func priKeyIO(pri *rsa.PrivateKey, r io.Reader, w io.Writer, isEncrytp bool) (err error) {
-	k := (pri.N.BitLen() + 7) / 8
-	if isEncrytp {
-		k = k - 11
-	}
-	buf := make([]byte, k)
-	var b []byte
-	size := 0
-	for {
-		size, err = r.Read(buf)
-		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-			return err
-		}
-		if size < k {
-			b = buf[:size]
-		} else {
-			b = buf
-		}
-		if isEncrytp {
-			b, err = priKeyEncrypt(rand.Reader, pri, b)
-		} else {
-			b, err = rsa.DecryptPKCS1v15(rand.Reader, pri, b)
-		}
-		if err != nil {
-			return err
-		}
-		if _, err = w.Write(b); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// copy from https://github.com/farmerx/gorsa
-func priKeyEncrypt(rand io.Reader, priv *rsa.PrivateKey, hashed []byte) ([]byte, error) {
-	tLen := len(hashed)
-	k := (priv.N.BitLen() + 7) / 8
-	if k < tLen+11 {
-		return nil, errors.New("data length error")
-	}
-	em := make([]byte, k)
-	em[1] = 1
-	for i := 2; i < k-tLen-1; i++ {
-		em[i] = 0xff
-	}
-	copy(em[k-tLen:k], hashed)
-	m := new(big.Int).SetBytes(em)
-	c, err := decrypt(rand, priv, m)
-	if err != nil {
-		return nil, err
-	}
-	copyWithLeftPad(em, c.Bytes())
-	return em, nil
-}
-
-var bigZero = big.NewInt(0)
-var bigOne = big.NewInt(1)
-
-// copy from https://github.com/farmerx/gorsa
-func decrypt(random io.Reader, priv *rsa.PrivateKey, c *big.Int) (m *big.Int, err error) {
-	if c.Cmp(priv.N) > 0 {
-		err = errors.New("decryption error")
-		return
-	}
-	var ir *big.Int
-	if random != nil {
-		var r *big.Int
-
-		for {
-			r, err = rand.Int(random, priv.N)
-			if err != nil {
-				return
-			}
-			if r.Cmp(bigZero) == 0 {
-				r = bigOne
-			}
-			var ok bool
-			ir, ok = modInverse(r, priv.N)
-			if ok {
-				break
-			}
-		}
-		bigE := big.NewInt(int64(priv.E))
-		rpowe := new(big.Int).Exp(r, bigE, priv.N)
-		cCopy := new(big.Int).Set(c)
-		cCopy.Mul(cCopy, rpowe)
-		cCopy.Mod(cCopy, priv.N)
-		c = cCopy
-	}
-	if priv.Precomputed.Dp == nil {
-		m = new(big.Int).Exp(c, priv.D, priv.N)
-	} else {
-		m = new(big.Int).Exp(c, priv.Precomputed.Dp, priv.Primes[0])
-		m2 := new(big.Int).Exp(c, priv.Precomputed.Dq, priv.Primes[1])
-		m.Sub(m, m2)
-		if m.Sign() < 0 {
-			m.Add(m, priv.Primes[0])
-		}
-		m.Mul(m, priv.Precomputed.Qinv)
-		m.Mod(m, priv.Primes[0])
-		m.Mul(m, priv.Primes[1])
-		m.Add(m, m2)
-
-		for i, values := range priv.Precomputed.CRTValues {
-			prime := priv.Primes[2+i]
-			m2.Exp(c, values.Exp, prime)
-			m2.Sub(m2, m)
-			m2.Mul(m2, values.Coeff)
-			m2.Mod(m2, prime)
-			if m2.Sign() < 0 {
-				m2.Add(m2, prime)
-			}
-			m2.Mul(m2, values.R)
-			m.Add(m, m2)
-		}
-	}
-	if ir != nil {
-		m.Mul(m, ir)
-		m.Mod(m, priv.N)
-	}
-
-	return
-}
-
-// copy from https://github.com/farmerx/gorsa
-func copyWithLeftPad(dest, src []byte) {
-	numPaddingBytes := len(dest) - len(src)
-	for i := 0; i < numPaddingBytes; i++ {
-		dest[i] = 0
-	}
-	copy(dest[numPaddingBytes:], src)
-}
-
-// copy from https://github.com/farmerx/gorsa
-func modInverse(a, n *big.Int) (ia *big.Int, ok bool) {
-	g := new(big.Int)
-	x := new(big.Int)
-	y := new(big.Int)
-	g.GCD(x, y, a, n)
-	if g.Cmp(bigOne) != 0 {
-		return
-	}
-	if x.Cmp(bigOne) < 0 {
-		x.Add(x, n)
-	}
-	return x, true
 }
