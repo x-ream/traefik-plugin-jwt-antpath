@@ -36,7 +36,7 @@ JWT AntPath is a middleware plugin for [Traefik](https://github.com/traefik/trae
 
 ## Configuration
 
-### Helm charts values.yml
+### Traefik helm charts values.yml
 
 ```yaml
 experimental:
