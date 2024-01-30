@@ -232,7 +232,11 @@ func (ja *JwtAntPath) verifyJwt(rw http.ResponseWriter, req *http.Request) bool 
 
 	token = strings.TrimPrefix(token, "Bearer ")
 
-	jwt, err, code := ParseJwt(token, []byte(ja.key.k))
+	keyBytes, err := base64.RawURLEncoding.DecodeString(ja.key.k)
+	if err != nil {
+		keyBytes = []byte(ja.key.k)
+	}
+	jwt, err, code := ParseJwt(token, keyBytes)
 
 	if err != nil {
 		http.Error(rw, err.Error(), code)
