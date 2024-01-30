@@ -378,8 +378,7 @@ func encryptByPrivateKey(input []byte, privateKey *rsa.PrivateKey) ([]byte, erro
 	if err != nil {
 		return []byte(""), err
 	}
-	return output.Bytes(), nil
-	//return ioutil.ReadAll(output)
+	return io.ReadAll(output)
 }
 
 // copy from https://github.com/farmerx/gorsa
