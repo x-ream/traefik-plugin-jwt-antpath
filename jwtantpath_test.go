@@ -206,6 +206,13 @@ func TestServeHTTP(t *testing.T) {
 			hasHeader: true,
 			userId:    21,
 		},
+		{
+			desc:      "should has header",
+			paths:     []string{`/*/metrics/**`},
+			reqPath:   "/z/test/zzz/xxx",
+			hasHeader: true,
+			userId:    22,
+		},
 	}
 
 	for _, test := range tests {
@@ -229,7 +236,7 @@ func TestServeHTTP(t *testing.T) {
 				}
 			})
 
-			SECRET := "abcZSEDDXA+++XDANNHDKEK234223OOPPP133...9US++"
+			SECRET := "abcabc234===++++++1234rewttyuurv+++"
 			cfg.SecureKey = SECRET
 			cfg.HeaderKey = "Authorization"
 

@@ -244,6 +244,7 @@ func (ja *JwtAntPath) verifyJwt(rw http.ResponseWriter, req *http.Request) bool 
 
 	delete(jwt.Payload, "exp")
 	delete(jwt.Payload, "iat")
+	delete(jwt.Payload, ja.headerKey)
 
 	for k, v := range jwt.Payload {
 		req.Header.Add(k, fmt.Sprintf("%v", v))
