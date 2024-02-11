@@ -140,7 +140,7 @@ func (ja *JwtAntPath) filter1Star(currentPath string, parse PathParse) bool {
 
 		if parse.TwoStarSuffix.endWith2Star { //no match **, return true
 			if !strings.Contains(currentPath, parse.OneStar.arr[len(parse.OneStar.arr)-1]) {
-				return true
+				return false
 			}
 		}
 
