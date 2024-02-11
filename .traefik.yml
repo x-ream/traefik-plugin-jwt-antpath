@@ -10,7 +10,8 @@ testData:
     enabled: false
     interval: "1m"
     uri: "http://jwks/one"
-    clientId: |
+    clientId: "1"
+    clientKey: |
       -----BEGIN PRIVATE KEY-----
       my-private-key
       -----END PRIVATE KEY-----
