@@ -220,6 +220,13 @@ func TestServeHTTP(t *testing.T) {
 			hasHeader: false,
 			userId:    22,
 		},
+		{
+			desc:      "should has header",
+			paths:     []string{`/**/metrics/**`},
+			reqPath:   "/z/metrics/metrics/sss",
+			hasHeader: false,
+			userId:    23,
+		},
 	}
 
 	for _, test := range tests {
