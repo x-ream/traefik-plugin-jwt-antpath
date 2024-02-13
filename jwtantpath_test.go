@@ -243,7 +243,7 @@ func TestServeHTTP(t *testing.T) {
 				}
 			})
 
-			SECRET := "abcabc234===++++++1234rewttyuurv+++"
+			SECRET := "abcabc234===++++qzseddzz8992zzz001ppooq3dsedfgeanmhdr"
 			cfg.SecureKey = SECRET
 			cfg.HeaderKey = "Authorization"
 
