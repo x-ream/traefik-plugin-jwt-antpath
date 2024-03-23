@@ -248,6 +248,7 @@ func TestServeHTTP(t *testing.T) {
 						userId = id
 					}
 				}
+				fmt.Println("nickName: ", req.Header.Get("nickName"))
 			})
 
 			SECRET := "abcabc234===++++qzseddzz8992zzz001ppooq3dsedfgeanmhdr"
@@ -256,7 +257,7 @@ func TestServeHTTP(t *testing.T) {
 
 			user := map[string]interface{}{
 				"UserId":   test.userId,
-				"NickName": "ooooHig",
+				"NickName": "大风吹",
 			}
 			fmt.Println(time.Now().Unix() + 30*24*60*60)
 			token, _ := CreateToken([]byte(SECRET), user, int(time.Now().Unix())+30*24*60*60)

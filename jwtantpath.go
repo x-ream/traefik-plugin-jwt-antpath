@@ -248,9 +248,12 @@ func (ja *JwtAntPath) verifyJwt(rw http.ResponseWriter, req *http.Request) bool 
 
 	for k, v := range jwt.Payload {
 		if v != nil {
-			value := fmt.Sprintf("%v", v)
-			if strings.TrimSpace(value) != "" {
-				req.Header.Add(k, value)
+			if value := fmt.Sprintf("%v", v); strings.TrimSpace(value) != "" {
+				if strings.HasSuffix(value, "json") {
+					req.Header.Add(k, value+";charset=UTF-8")
+				} else {
+					req.Header.Add(k, value)
+				}
 			}
 		}
 	}
