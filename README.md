@@ -40,9 +40,8 @@ JWT AntPath is a middleware plugin for [Traefik](https://github.com/traefik/trae
 
 ```yaml
 experimental:
-  enabled: true
   plugins:
-    jwtantpath:
+    traefik-plugin-jwt-antpath:
       moduleName: "github.com/x-ream/traefik-plugin-jwt-antpath"
       version: "v0.1.0"
 ```
@@ -56,7 +55,7 @@ metadata:
   name: my-jwtantpath
 spec:
   plugin:
-    jwtantpath:
+    traefik-plugin-jwt-antpath:
       headerKey: "Authorization"
       secureKey: "my-secret-key"
       paths:
@@ -85,9 +84,9 @@ ingress:
 ### Static
 
 ```toml
-[experimental.plugins.jwtantpath]
+[experimental.plugins.traefik-plugin-jwt-antpath]
     modulename = "github.com/x-ream/traefik-plugin-jwt-antpath"
-    version = "v0.1.0"
+    version = "v0.1.1"
 ```
 
 ### Dynamic
@@ -105,7 +104,7 @@ and uses the `JWT AntPath` middleware plugin to verify token and add payload to 
 
 # Very jwt exclude all paths starting with /foo
 [http.middlewares]
-  [http.middlewares.foo.plugin.jwtantpath]
+  [http.middlewares.foo.plugin.traefik-plugin-jwt-antpath]
     secureKey = "my-secret-key"
     headerKey =  "Authorization"  
     paths = ["/foo/**", "/*/goods/**"]
