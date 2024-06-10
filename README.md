@@ -43,7 +43,7 @@ experimental:
   plugins:
     traefik-plugin-jwt-antpath:
       moduleName: "github.com/x-ream/traefik-plugin-jwt-antpath"
-      version: "v0.1.0"
+      version: "v0.1.2"
 ```
 
 ### K8s middleware
@@ -86,7 +86,7 @@ ingress:
 ```toml
 [experimental.plugins.traefik-plugin-jwt-antpath]
     modulename = "github.com/x-ream/traefik-plugin-jwt-antpath"
-    version = "v0.1.1"
+    version = "v0.1.2"
 ```
 
 ### Dynamic
