@@ -193,6 +193,11 @@ func (ja *JwtAntPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	if strings.Contains(currentPath, "/internal") {
+		http.Error(rw, "/internal", http.StatusForbidden)
+		return
+	}
+
 	for _, parse := range ja.pathParses {
 
 		if parse.prefix2 != "/*" && !strings.HasPrefix(currentPath, parse.prefix2) {
