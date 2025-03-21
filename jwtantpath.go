@@ -62,11 +62,12 @@ type JwksConfig struct {
 
 // Config holds the plugin configuration.
 type Config struct {
-	Paths     []string   `json:"paths,omitempty" toml:"paths,omitempty" yaml:"paths,omitempty"`
-	HeaderKey string     `json:"headerKey,omitempty" toml:"headerKey,omitempty" yaml:"headerKey,omitempty"`
-	SecureKey string     `json:"secureKey,omitempty" toml:"secureKey,omitempty" yaml:"secureKey,omitempty"`
-	Jwks      JwksConfig `json:"jwks,omitempty" toml:"jwks,omitempty" yaml:"jwks,omitempty"`
-	key       *KeyHS256
+	Paths                     []string   `json:"paths,omitempty" toml:"paths,omitempty" yaml:"paths,omitempty"`
+	HeaderKey                 string     `json:"headerKey,omitempty" toml:"headerKey,omitempty" yaml:"headerKey,omitempty"`
+	SecureKey                 string     `json:"secureKey,omitempty" toml:"secureKey,omitempty" yaml:"secureKey,omitempty"`
+	Jwks                      JwksConfig `json:"jwks,omitempty" toml:"jwks,omitempty" yaml:"jwks,omitempty"`
+	key                       *KeyHS256
+	AllowedSubDomainOfOrigins []string `json:"allowedSubDomainOfOrigins,omitempty" toml:"allowedSubDomainOfOrigins,omitempty" yaml:"allowedSubDomainOfOrigins,omitempty"`
 }
 
 // CreateConfig creates and initializes the plugin configuration.
@@ -75,11 +76,12 @@ func CreateConfig() *Config {
 }
 
 type JwtAntPath struct {
-	name       string
-	next       http.Handler
-	pathParses []PathParse
-	headerKey  string
-	key        *KeyHS256
+	name                      string
+	next                      http.Handler
+	pathParses                []PathParse
+	headerKey                 string
+	key                       *KeyHS256
+	allowedSubDomainOfOrigins []string
 }
 
 // New creates and returns a plugin instance.
@@ -126,11 +128,12 @@ func New(_ context.Context, next http.Handler, config *Config, name string) (htt
 	schedule(config)
 
 	return &JwtAntPath{
-		name:       name,
-		next:       next,
-		pathParses: pathParses,
-		headerKey:  config.HeaderKey,
-		key:        &key,
+		name:                      name,
+		next:                      next,
+		pathParses:                pathParses,
+		headerKey:                 config.HeaderKey,
+		key:                       &key,
+		allowedSubDomainOfOrigins: config.AllowedSubDomainOfOrigins,
 	}, nil
 }
 
@@ -185,11 +188,29 @@ func (ja *JwtAntPath) filter2StarSuffix(currentPath string, parse PathParse) boo
 	return false
 }
 
+func allowOrigin(rw http.ResponseWriter, req *http.Request, allowedSubDomainOfOrigins []string) {
+	if allowedSubDomainOfOrigins == nil || len(allowedSubDomainOfOrigins) == 0 {
+		return
+	}
+	for _, v := range allowedSubDomainOfOrigins {
+		if strings.HasSuffix(req.Host, v) {
+			origin := req.Header.Get("Origin")
+			rw.Header().Add("Access-Control-Allow-Origin", origin)
+			break
+		}
+	}
+}
+
+func nextServer(rw http.ResponseWriter, req *http.Request, ja *JwtAntPath) {
+	allowOrigin(rw, req, ja.allowedSubDomainOfOrigins)
+	ja.next.ServeHTTP(rw, req)
+}
+
 func (ja *JwtAntPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	currentPath := req.URL.EscapedPath()
 
 	if currentPath == "/" {
-		ja.next.ServeHTTP(rw, req)
+		nextServer(rw, req, ja)
 		return
 	}
 
@@ -205,24 +226,24 @@ func (ja *JwtAntPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		}
 
 		if currentPath == parse.path {
-			ja.next.ServeHTTP(rw, req)
+			nextServer(rw, req, ja)
 			return
 		}
 
 		if ja.filter2StarSuffix(currentPath, parse) {
-			ja.next.ServeHTTP(rw, req)
+			nextServer(rw, req, ja)
 			return
 		}
 
 		if ja.filter1Star(currentPath, parse) {
-			ja.next.ServeHTTP(rw, req)
+			nextServer(rw, req, ja)
 			return
 		}
 
 	}
 
 	if ja.verifyJwt(rw, req) {
-		ja.next.ServeHTTP(rw, req)
+		nextServer(rw, req, ja)
 	}
 }
 
