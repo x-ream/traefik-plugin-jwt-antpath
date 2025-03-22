@@ -192,10 +192,22 @@ func allowOrigin(rw http.ResponseWriter, req *http.Request, allowedSubDomainOfOr
 	if allowedSubDomainOfOrigins == nil || len(allowedSubDomainOfOrigins) == 0 {
 		return
 	}
+
+	origin := req.Header.Get("Origin")
+	if origin == "" {
+		// If Origin header is missing, construct it from Host
+		scheme := "http"
+		if req.TLS != nil {
+			scheme = "https"
+		}
+		origin = scheme + "://" + req.Host
+	}
+
 	for _, v := range allowedSubDomainOfOrigins {
-		if strings.HasSuffix(req.Host, v) {
-			origin := req.Header.Get("Origin")
+		if strings.HasSuffix(origin, v) {
 			rw.Header().Add("Access-Control-Allow-Origin", origin)
+			rw.Header().Add("Access-Control-Allow-Methods", "*")
+			rw.Header().Add("Access-Control-Allow-Headers", "*")
 			break
 		}
 	}
