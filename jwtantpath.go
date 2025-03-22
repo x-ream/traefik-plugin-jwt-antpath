@@ -218,7 +218,24 @@ func nextServer(rw http.ResponseWriter, req *http.Request, ja *JwtAntPath) {
 	ja.next.ServeHTTP(rw, req)
 }
 
+func filterOptions(rw http.ResponseWriter, req *http.Request, ja *JwtAntPath) bool {
+
+	if req.Method == "OPTIONS" {
+		// Set CORS headers for preflight
+		allowOrigin(rw, req, ja.allowedSubDomainOfOrigins)
+		rw.Header().Set("Access-Control-Max-Age", "86400") // 24 hours
+		rw.WriteHeader(http.StatusOK)
+		return true
+	}
+	return false
+}
+
 func (ja *JwtAntPath) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+
+	if filterOptions(rw, req, ja) {
+		return
+	}
+
 	currentPath := req.URL.EscapedPath()
 
 	if currentPath == "/" {
